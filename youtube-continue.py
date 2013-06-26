@@ -33,7 +33,8 @@ group = parser.add_argument_group(title="Managing command line arguments to yout
 group.add_argument('-G', '--global', action='store_true', dest='cfg_global',
                     help="Change the global youtube-dl arguments.")
 group.add_argument('-L', '--local', action='store_true', dest='cfg_local',
-                    help="Change the local (i.e. for this directory) youtube-dl arguments.")
+                   help="Change the local (i.e. for this directory) youtube-dl arguments. "
+                   "Also works for changing the URL and/or starting index.")
 parser.add_argument('dl_args', nargs=argparse.REMAINDER, metavar='...',
                     help="Arguments for youtube-dl. Use this for, e.g. quality settings. "
                     "Hint: try '-- -w -c --max-quality=22/45'; the -- marks the end of arguments to %(prog)s.")
@@ -42,21 +43,26 @@ while '--' in args.dl_args:
     args.dl_args.remove('--')
 dl_args = ' '.join(args.dl_args)
 
-if args.dry_run:
-    print args
-
 if args.cfg_global:
     if args.dry_run:
-        print gconf.get('main', 'dl-args'), 'changes to', dl_args
+        print "Download arguments change from '%s' to '%s'" % (gconf.get('main', 'dl-args'), dl_args)
     else:
         gconf.set('main', 'dl-args', dl_args)
         with open(GLOBAL_CONF_PATH, 'w') as fp:
             gconf.write(fp)
 elif args.cfg_local:
     if args.dry_run:
-        print lconf.get('main', 'dl-args'), 'changes to', dl_args
+        print "Download arguments change from '%s' to '%s'" % (lconf.get('main', 'dl-args'), dl_args)
+        if args.url:
+            print "URL changes from '%s' to '%s'" % (lconf.get('main', 'url'), args.url)
+        if args.start:
+            print "Start index changes from '%s' to '%d'" % (lconf.get('main', 'start'), args.start)
     else:
         lconf.set('main', 'dl-args', dl_args)
+        if args.url:
+            lconf.set('main', 'url', args.url)
+        if args.start:
+            lconf.set('main', 'start', str(args.start))
         with open(LOCAL_CONF_PATH, 'w') as fp:
             lconf.write(fp)
 else:
