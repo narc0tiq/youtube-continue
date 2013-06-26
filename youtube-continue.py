@@ -63,6 +63,9 @@ else:
     url = args.url
     if not url:
         url = lconf.get('main', 'url')
+    if not url:
+        raise ValueError('No playlist URL!')
+
     start = args.start
     if not start:
         start = lconf.getint('main', 'start')
