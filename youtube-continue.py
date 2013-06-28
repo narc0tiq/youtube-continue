@@ -112,7 +112,7 @@ def main():
     # -G : Change global options
     if configure_global:
         if args.dry_run:
-            print "Download arguments change from '%s' to '%s'" % (gconf.get('main', 'dl-args'), dl_args)
+            print "[--dry-run]: Global download arguments would change from '%s' to '%s'" % (gconf.get('main', 'dl-args'), dl_args)
         else:
             gconf.set('main', 'dl-args', dl_args)
             with open(GLOBAL_CONF_PATH, 'w') as fp:
@@ -121,7 +121,7 @@ def main():
     # -L : Change local options
     if configure_local:
         if args.dry_run:
-            print "Download arguments change from '%s' to '%s'" % (lconf.get('main', 'dl-args'), dl_args)
+            print "[--dry-run]: Download arguments would change from '%s' to '%s'" % (lconf.get('main', 'dl-args'), dl_args)
             if args.url:
                 print "URL changes from '%s' to '%s'" % (lconf.get('main', 'url'), args.url)
             if args.start:
@@ -152,11 +152,14 @@ def main():
             return CHANGED_URL
     elif url:
         # We got a URL on the command line, and need to store it for later use.
-        lconf.set('main', 'url', args.url)
-        print "Storing playlist URL..."
-        with open(LOCAL_CONF_PATH, 'w') as fp:
-            lconf.write(fp)
-        print "URL stored.  You won't need to specify it again."
+        if args.dry_run:
+            print "[--dry-run]: Would store playlist URL:", url
+        else:
+            lconf.set('main', 'url', args.url)
+            print "Storing playlist URL..."
+            with open(LOCAL_CONF_PATH, 'w') as fp:
+                lconf.write(fp)
+            print "URL stored.  You won't need to specify it again."
     elif config_url:
         # No URL set on the command line, but that's fine, because we already have it stored.
         print "Continuing stored playlist."
@@ -196,7 +199,7 @@ def main():
 
     if args.dry_run:
         # Dry run: Print it out and exit.
-        print cmd_parts
+        print "[--dry-run]: Would execute:", cmd_parts
         return OK
 
     retval = subprocess.call(cmd_parts)
