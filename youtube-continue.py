@@ -42,6 +42,14 @@ parser.add_argument('-u', '--url',
                     "e.g. http://youtube.com/playlist?list=xxxx. Only necessary for the first run.")
 parser.add_argument('-s', '--start', type=int, metavar='INDEX',
                     help="Manually set the starting index for this download.")
+parser.add_argument('--fix-names', action='store_true', dest='fix_names',
+                    help="When the name of a video or its position in the playlist is changed, the "
+                    "file name it's given will change as well, causing youtube-dl to not "
+                    "recognize the video and thus download a new copy.  This option causes "
+                    "youtube-continue to attempt to fix naming issues by using the video ID to "
+                    "move each existing file to the correct filename.  With --dry-run (which is "
+                    "highly recommended), youtube-continue instead prints out a list of mv commands "
+                    "instead of running them.")
 
 group = parser.add_argument_group(title="Managing stored settings.")
 group.add_argument('--configure', action='append', choices=["local", "global", "both"],
@@ -171,10 +179,15 @@ def main():
     # Get the playlist index to start at.
     start = args.start
     commandline_start = True
-    if not start:
-        # This will default to 1 if not set.
-        start = lconf.getint('main', 'start')
-        commandline_start = False
+    if start is None:
+        if args.fix_names:
+            # If we're fixing names, we should fix all of them unless explicitly
+            # told otherwise.
+            start = 1
+        else:
+            # This will default to 1 if not set.
+            start = lconf.getint('main', 'start')
+            commandline_start = False
 
     if start == 0:
         # Programmers.  Always wanting to start at zero.
@@ -196,6 +209,66 @@ def main():
     cmd_parts = shlex.split(cmdline)
     cmd_parts.extend(FORMAT_ARGS)
     cmd_parts.append(url)
+
+    if args.fix_names:
+        # Find out what we have to work with.
+        existing_filenames = set(os.listdir("."))
+
+        print "Fixing video filenames.  This may take a while..."
+
+        if args.dry_run:
+            print "(This is a dry run: Commands will only be printed.)"
+        else:
+            print "(This is a wet run: Moves will actually be performed.)"
+
+        print
+
+        # Invoke youtube-dl with --get-filename
+        cmd_parts.append("--get-filename")
+        ytd = subprocess.Popen(cmd_parts, stdout=subprocess.PIPE)
+
+        # As it gives us the correct filenames...
+        for raw_filename in ytd.stdout:
+            filename = raw_filename.strip()
+
+            if not filename:
+                continue
+
+            print "# youtube-dl gave filename:", filename
+            if filename in existing_filenames:
+                print "# File exists."
+                continue
+
+            # Extract the video ID.
+            id = filename.split(".")[-2]
+
+            if len(id) < 5:
+                print "# Video ID %s seems too short.  Skipping it." % id
+                continue
+
+            # Search for a matching file.
+            found = False
+            for oldname in tuple(existing_filenames):
+                if id in oldname:
+                    if found:
+                        print "# Conflict!  Additional match:", oldname
+                        continue
+
+                    found = True
+
+                    print "# Found matching file:", oldname
+                    print "mv '%s' '%s'" % (oldname, filename)
+                    if not args.dry_run:
+                        os.rename(oldname, filename)
+
+                    existing_filenames.remove(oldname)
+                    existing_filenames.add(filename)
+
+            if not found:
+                print "No match found."
+            print
+
+        return OK
 
     if args.dry_run:
         # Dry run: Print it out and exit.
