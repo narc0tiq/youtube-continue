@@ -13,7 +13,7 @@ YTDL_OFFSET = 10000
 
 GLOBAL_CONF_PATH = os.path.expanduser('~/.config/youtube-continue.ini')
 LOCAL_CONF_PATH = './youtube-continue.ini'
-FORMAT_ARGS = ['-o', '%(playlist_index)s-%(title)s-%(id)s.%(ext)s']
+FORMAT_ARGS = ['-o', '%(playlist_index)s-%(title)s.%(id)s.%(ext)s']
 
 # Load the global and local configuration files.
 gconf = ConfigParser({'dl-args': ''})
