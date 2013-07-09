@@ -265,7 +265,7 @@ def main():
                     existing_filenames.add(filename)
 
             if not found:
-                print "No match found."
+                print "# No match found."
             print
 
         return OK
