@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from ConfigParser import ConfigParser
-import argparse, os, subprocess, sys, glob
+import argparse, os, shlex, subprocess, sys, glob
 
 # Exit codes
 OK = 0
@@ -193,7 +193,7 @@ def main():
 
     # Build the final command line.
     cmdline = 'youtube-dl %s --playlist-start=%d' % (cmd_args, start)
-    cmd_parts = cmdline.split()
+    cmd_parts = shlex.split(cmdline)
     cmd_parts.extend(FORMAT_ARGS)
     cmd_parts.append(url)
 
