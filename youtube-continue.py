@@ -69,7 +69,7 @@ def get_last_index():
     Searches the current directory for the highest-numbered video downloaded.
     """
     last_index = 0
-    for candidate in glob.iglob('[0-9]*-*-*.*'):
+    for candidate in glob.iglob('[0-9]*-*.*.*'):
         idx, unused = candidate.split('-', 1)
         if int(idx) > last_index:
             last_index = int(idx)
